@@ -1,0 +1,13 @@
+Some of the code has been borrowed from [https://github.com/Smerity/cc-warc-examples]
+
+This code simpy extracts URLs from CommonCrawl segments.
+
+AWSOptions="-D fs.s3n.awsAccessKeyId=$AWS_ACCESS_KEY -D fs.s3n.awsSecretAccessKey=$AWS_SECRET_KEY"
+
+commonOptions="-D mapred.child.java.opts=-Xmx1024m -D mapred.compress.map.output=true -D mapred.compress.output=true -D mapred.reduce.tasks.speculative.execution=true -D mapred.map.tasks.speculative.execution=true"
+
+skipRecordsOptions="-D mapred.skip.attempts.to.start.skipping=2 -D mapred.skip.map.max.skip.records=10 -D mapred.max.map.failures.percent=10"
+
+hadoop jar target/commoncrawl-1.0-SNAPSHOT-job.jar com.digitalpebble.commoncrawl.URLExtractor $AWSOptions $commonOptions $skipRecordsOptions s3n://aws-publicdatasets/common-crawl/crawl-data/CC-MAIN-2014-10/segments/1394678*/wat/*.warc.wat.gz 1394678-URLs
+
+
