@@ -72,8 +72,10 @@ public class URLExtractor extends Configured implements Tool {
 		job.setInputFormatClass(WARCFileInputFormat.class);
 		job.setOutputFormatClass(TextOutputFormat.class);
 
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(NullWritable.class);
+		
+		job.setMapperClass(UrlExtractorMapper.class);
 
 		// no reducers needed
 		job.setNumReduceTasks(0);
@@ -85,7 +87,7 @@ public class URLExtractor extends Configured implements Tool {
 		}
 	}
 
-	static class LinkExtractorMapper extends
+	static class UrlExtractorMapper extends
 			Mapper<Text, ArchiveReader, Text, NullWritable> {
 		private Text outKey = new Text();
 
@@ -97,18 +99,10 @@ public class URLExtractor extends Configured implements Tool {
 		public void map(Text key, ArchiveReader value, Context context)
 				throws IOException {
 			for (ArchiveRecord r : value) {
-				// Skip any records that are not JSON
-				if (!r.getHeader().getMimetype().equals("application/json")) {
-					continue;
-				}
-
 				String sourceURL = r.getHeader().getUrl();
-
 				if (StringUtils.isBlank(sourceURL))
 					continue;
-
 				outKey.set(sourceURL);
-
 				try {
 					context.write(outKey, NullWritable.get());
 				} catch (Exception ex) {
