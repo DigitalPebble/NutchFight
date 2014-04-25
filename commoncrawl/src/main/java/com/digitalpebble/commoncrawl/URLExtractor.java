@@ -99,6 +99,10 @@ public class URLExtractor extends Configured implements Tool {
 		public void map(Text key, ArchiveReader value, Context context)
 				throws IOException {
 			for (ArchiveRecord r : value) {
+				// Skip any records that are not JSON
+				if (!r.getHeader().getMimetype().equals("application/json")) {
+					continue;
+				}				
 				String sourceURL = r.getHeader().getUrl();
 				if (StringUtils.isBlank(sourceURL))
 					continue;
