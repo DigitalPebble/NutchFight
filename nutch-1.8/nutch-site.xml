@@ -57,21 +57,12 @@
 </property>
 
 <property>
-<name>generate.max.count</name>
-<value>100</value>
-<description>The maximum number of urls in a single
-fetchlist. -1 if unlimited. The urls are counted according
-to the value of the parameter generator.count.mode.
-</description>
-</property>
-
-<property>
- <name>db.update.additions.allowed</name>
-<value>false</value>
-<description>If true, updatedb will add newly discovered URLs, if false
-only already existing URLs in the CrawlDb will be updated and no new
-URLs will be added.
-</description>
+  <name>generate.max.count</name>
+  <value>100</value>
+  <description>The maximum number of urls in a single
+  fetchlist. -1 if unlimited. The urls are counted according
+  to the value of the parameter generator.count.mode.
+  </description>
 </property>
 
 </configuration>
