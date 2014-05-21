@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+
+<property>
+ <name>storage.data.store.class</name>
+ <value>org.apache.gora.hbase.store.HBaseStore</value>
+ <description>Default class for storing data</description>
+</property>
+
+<property>
+  <name>http.agent.name</name>
+  <value>PebbleCrawler</value>
+</property>
+
+<property>
+  <name>http.robots.agents</name>
+  <value>PebbleCrawler,*</value>
+  <description>The agent strings we'll look for in robots.txt files,
+  comma-separated, in decreasing order of precedence. You should
+  put the value of http.agent.name as the first agent name, and keep the
+  default * at the end of the list. E.g.: BlurflDev,Blurfl,*
+  </description>
+</property>
+
+<property>
+  <name>http.agent.description</name>
+  <value>Crawler for DigitalPebble.com</value>
+</property>
+
+<property>
+  <name>http.agent.url</name>
+  <value>http://www.digitalpebble.com/</value>
+</property>
+
+<property>
+  <name>http.agent.email</name>
+  <value>crawler@digitalpebble.com</value>
+</property>
+
+<property>
+  <name>fetcher.server.delay</name>
+  <value>1.0</value>
+  <description>The number of seconds the fetcher will delay between 
+   successive requests to the same server.</description>
+</property>
+
+<property>
+  <name>fetcher.server.min.delay</name>
+  <value>1.0</value>
+  <description>The minimum number of seconds the fetcher will delay between 
+  successive requests to the same server. This value is applicable ONLY
+  if fetcher.threads.per.host is greater than 1 (i.e. the host blocking
+  is turned off).</description>
+</property>
+
+<property>
+  <name>fetcher.queue.depth.multiplier</name>
+  <value>2000</value>
+</property>
+
+<property>
+  <name>generate.max.count</name>
+  <value>100</value>
+  <description>The maximum number of urls in a single
+  fetchlist. -1 if unlimited. The urls are counted according
+  to the value of the parameter generator.count.mode.
+  </description>
+</property>
+
+</configuration>

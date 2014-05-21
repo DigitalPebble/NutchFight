@@ -1,0 +1,125 @@
+#!/bin/bash
+
+SEEDDIR="$1"
+CRAWL_ID="$2"
+LIMIT="$3"
+
+if [ "$SEEDDIR" = "" ]; then
+    echo "Missing seedDir : crawl <seedDir> <crawlID> <numberOfRounds>"
+    exit -1;
+fi
+
+if [ "$CRAWL_ID" = "" ]; then
+    echo "Missing crawlDir : crawl <seedDir> <crawlID> <numberOfRounds>"
+    exit -1;
+fi
+
+if [ "$LIMIT" = "" ]; then
+    echo "Missing numberOfRounds : crawl <seedDir> <crawlID> <numberOfRounds>"
+    exit -1;
+fi
+
+#############################################
+# MODIFY THE PARAMETERS BELOW TO YOUR NEEDS #
+#############################################
+
+# set the number of slaves nodes
+numSlaves=5
+
+# and the total number of available tasks
+# sets Hadoop parameter "mapred.reduce.tasks"
+numTasks=`expr $numSlaves \* 1`
+
+# number of urls to fetch in one iteration
+# 250K per task?
+sizeFetchlist=`expr $numSlaves \* 50000`
+
+# time limit for feching
+timeLimitFetch=60
+
+# Adds <days> to the current time to facilitate 
+# crawling urls already fetched sooner then 
+# db.default.fetch.interval.
+addDays=0
+#############################################
+
+bin=`dirname "$0"`
+bin=`cd "$bin"; pwd`
+
+# determines whether mode based on presence of job file
+mode=local
+if [ -f ${bin}/../*nutch*.job ]; then
+    mode=distributed
+fi
+
+# note that some of the options listed here could be set in the 
+# corresponding hadoop site xml param file 
+commonOptions="-D mapred.reduce.tasks=$numTasks -D mapred.child.java.opts=-Xmx1000m -D mapred.reduce.tasks.speculative.execution=false -D mapred.map.tasks.speculative.execution=false -D mapred.compress.map.output=true"
+
+ # check that hadoop can be found on the path 
+if [ $mode = "distributed" ]; then
+ if [ $(which hadoop | wc -l ) -eq 0 ]; then
+    echo "Can't find Hadoop executable. Add HADOOP_HOME/bin to the path or run in local mode."
+    exit -1;
+ fi
+fi
+
+# initial injection
+$bin/nutch inject $SEEDDIR -crawlId $CRAWL_ID
+
+if [ $? -ne 0 ] 
+  then exit $? 
+fi
+
+
+# main loop : rounds of generate - fetch - parse - update
+for ((a=1; a <= LIMIT ; a++))
+do
+  if [ -e ".STOP" ]
+  then
+   echo "STOP file found - escaping loop"
+   break
+  fi
+
+  echo `date` ": Iteration $a of $LIMIT"
+
+  echo "Generating batchId"
+  batchId=`date +%s`-$RANDOM
+
+  echo "Generating a new fetchlist"
+  $bin/nutch generate $commonOptions -topN $sizeFetchlist -noNorm -noFilter -adddays $addDays -crawlId $CRAWL_ID -batchId $batchId
+  
+  if [ $? -ne 0 ] 
+  then exit $? 
+  fi
+
+  echo "Fetching : "
+  $bin/nutch fetch $commonOptions -D fetcher.timelimit.mins=$timeLimitFetch $batchId -crawlId $CRAWL_ID -threads 50
+
+  if [ $? -ne 0 ] 
+  then exit $? 
+  fi
+
+  # parsing the batch
+  echo "Parsing : "
+  # enable the skipping of records for the parsing so that a dodgy document 
+  # so that it does not fail the full task
+  skipRecordsOptions="-D mapred.skip.attempts.to.start.skipping=2 -D mapred.skip.map.max.skip.records=1"
+  $bin/nutch parse $commonOptions $skipRecordsOptions $batchId -crawlId $CRAWL_ID
+
+  if [ $? -ne 0 ] 
+  then exit $? 
+  fi
+
+  # updatedb with this batch
+  echo "CrawlDB update for $CRAWL_ID"
+  $bin/nutch updatedb $commonOptions $batchId -crawlId $CRAWL_ID
+
+  if [ $? -ne 0 ] 
+  then exit $? 
+  fi
+  
+done
+
+exit 0
+
